@@ -1,31 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { StudentResults } from "@/components/student-results";
+import { useStudentSearch } from "@/lib/search/hooks";
 
 export function SearchBox() {
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (query.trim()) {
-      router.push(`/api/search?q=${encodeURIComponent(query)}`);
-    }
-  };
-
+  const search = useStudentSearch();
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <div className="flex flex-col gap-4">
       <Input
         type="search"
-        placeholder="Search by name, roll number, email, phone, or ID..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="flex-1"
+        placeholder="Search by PNR (22CS1045), roll number (1045), or name (Rahul)"
+        value={search.q}
+        onChange={(e) => search.onChange(e.target.value)}
+        className="text-base"
       />
-      <Button type="submit">Search</Button>
-    </form>
+      <StudentResults {...search} />
+    </div>
   );
 }

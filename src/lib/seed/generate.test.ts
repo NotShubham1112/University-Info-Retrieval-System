@@ -29,6 +29,25 @@ describe("seed generator", () => {
     expect(students.length).toBe(2000);
     expect(new Set(students.map((s) => s.pnr)).size).toBe(2000);
   });
+  it("produces globally unique full names across the full 40-year dataset", () => {
+    const names = new Set<string>();
+    let ordinal = 0;
+    for (let y = 1986; y < 2026; y++) {
+      for (const s of generateYear(y, 2000, ordinal)) names.add(s.search_name);
+      ordinal += 2000;
+    }
+    expect(names.size).toBe(40 * 2000);
+  });
+  it("varies first names within a single year (not one constant first name)", () => {
+    const year = generateYear(1995, 2000);
+    const firsts = new Set(year.map((s) => s.first_name));
+    expect(firsts.size).toBeGreaterThan(1);
+  });
+  it("varies last names within a single year", () => {
+    const year = generateYear(1995, 2000);
+    const lasts = new Set(year.map((s) => s.last_name));
+    expect(lasts.size).toBeGreaterThan(1);
+  });
   it("marks are deterministic, in [40, 100], and grade mapping is consistent", () => {
     expect(marksFor(7)).toBe(marksFor(7));
     expect(marksFor(99)).toBeGreaterThanOrEqual(40);

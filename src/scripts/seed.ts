@@ -18,9 +18,15 @@ async function insertInBatches(
 ): Promise<number[]> {
   const ids: number[] = [];
   for (let i = 0; i < rows.length; i += BATCH) {
-    const { data, error } = await client.from(table).insert(rows.slice(i, i + BATCH)).select("id");
-    if (error) throw new Error(`${table} batch ${i}: ${error.message}`);
-    for (const row of data ?? []) ids.push(row.id);
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data, error } = await client.from(table).insert(rows.slice(i, i + BATCH)).select("id");
+      if (!error) {
+        for (const row of data ?? []) ids.push(row.id);
+        break;
+      }
+      if (attempt === 4) throw new Error(`${table} batch ${i}: ${error.message}`);
+      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+    }
   }
   return ids;
 }
@@ -91,8 +97,10 @@ async function main() {
   }
 
   // --- students + related records, year by year -------------------------
+  let ordinal = 0;
   for (let year = startYear; year < startYear + yearsArg; year++) {
-    const students = generateYear(year, perYear);
+    const students = generateYear(year, perYear, ordinal);
+    ordinal += perYear;
     const studentRows = students.map((s) => ({
       ...s,
       program_id: programIdMap.get(s.program_id)!,

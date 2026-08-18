@@ -23,7 +23,7 @@ export function generateRollNumber(year: number, index: number): string {
 }
 
 export function generateStudent(seed: number, year: number, index: number): StudentSeed {
-  const [first, last] = seededNames(seed + index * 7919);
+  const [first, last] = seededNames(seed);
   const pnr = generatePnr(year, index);
   return {
     pnr,
@@ -36,8 +36,8 @@ export function generateStudent(seed: number, year: number, index: number): Stud
   };
 }
 
-export function generateYear(year: number, count: number): StudentSeed[] {
-  return Array.from({ length: count }, (_, i) => generateStudent(year + i, year, i));
+export function generateYear(year: number, count: number, ordinalBase = 0): StudentSeed[] {
+  return Array.from({ length: count }, (_, i) => generateStudent(ordinalBase + i, year, i));
 }
 
 // Deterministic PRNG so re-seeding produces identical data

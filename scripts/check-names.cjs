@@ -1,0 +1,11 @@
+const fs = require("fs");
+const c = fs.readFileSync("src/lib/seed/names.ts", "utf8");
+const lines = c.split("\n");
+const firstEnd = lines.findIndex((l) => l.trim() === "];");
+const lastStart = lines.findIndex((l, i) => i > firstEnd && l.trim() === "const LAST = [");
+const lastEnd = lines.findIndex((l, i) => i > lastStart && l.trim() === "];");
+const firstBlock = lines.slice(1, firstEnd).join(",");
+const lastBlock = lines.slice(lastStart + 1, lastEnd).join(",");
+const firstCount = (firstBlock.match(/"/g) || []).length / 2;
+const lastCount = (lastBlock.match(/"/g) || []).length / 2;
+console.log("FIRST:", firstCount, "LAST:", lastCount, "Pool:", firstCount * lastCount);

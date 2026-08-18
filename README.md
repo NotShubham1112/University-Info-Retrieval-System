@@ -34,3 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Search benchmark
+
+Measured over the full synthetic dataset (80,000 students, 3.2M enrollments) with
+`npx tsx --env-file=.env src/scripts/benchmark.ts` (20 iterations per probe):
+
+| type | query | avg (ms) | min (ms) | max (ms) |
+| --- | --- | --- | --- | --- |
+| pnr | 22CS0001 | 4.21 | 2.25 | 21.56 |
+| roll | 1045 | 2.80 | 2.27 | 3.49 |
+| name | Rahul Sharma | 50.77 | 48.85 | 55.34 |
+| name | Rahul | 14.17 | 13.12 | 15.22 |

@@ -191,13 +191,13 @@ rewrite seed.
    `category_seat_eligibility` (`category_id`, `seat_type`, `admission_mode`).
 
 2. **0005_v4_core.sql — modify `students`.** Add columns: `category_id` FK,
-   `abc_id`, `gender`, `aadhaar_number` (text, will hold
-   `PGP_SYM_ENCRYPT`-encrypted value), `address`, `city`, `state`, `country`,
-   `blood_group`, `photo_path`, `guardian_name`, `guardian_contact_number`
-   (inline; drop `guardians` table). Add unique index on `aadhaar_number`
-   (on the encrypted ciphertext — uniqueness check must hash/encrypt at write,
-   never compare plaintext). Never select `aadhaar_number` in default column
-   lists. `programs` → `courses` rename with data backfill, then drop
+   `abc_id`, `gender`, `aadhaar_number` (text; holds the app-side AES-256-GCM
+   encrypted value — see Task 4; never select it in default column lists),
+   `aadhaar_hash` (text; deterministic SHA-256 of the plaintext — **unique
+   index on this**, never on the ciphertext, which is non-deterministic),
+   `address`, `city`, `state`, `country`, `blood_group`, `photo_path`,
+   `guardian_name`, `guardian_contact_number` (inline; drop `guardians`
+   table). `programs` → `courses` rename with data backfill, then drop
    `programs`.
 
 3. **0006_v4_academics.sql — academics.** `enrollments` → `admissions`
@@ -423,8 +423,11 @@ polish, audit trail (spec §6).
 1. **`src/lib/crypto.ts`** — app-side AES-256-GCM:
    - Key from `AADHAAR_ENCRYPTION_KEY` (32-byte base64 in env; validate length
      at startup).
-   - `encryptAadhaar(plain)` → `v1.<iv>.<tag>.<ciphertext>` base64; `decryptAadhaar`
-     with timing-safe failure → `null` (never throw into callers).
+   - `encryptAadhaar(plain)` → `v1.<iv>.<tag>.<ciphertext>` base64;
+     `decryptAadhaar` with timing-safe failure → `null` (never throw into
+     callers). `aadhaarHash(plain)` → deterministic SHA-256 hex used for the
+     `students.aadhaar_hash` uniqueness column; written alongside the
+     ciphertext on create/update.
    - **Never projected by default**: every query/route that reads `students`
      selects an explicit column list that omits `aadhaar_number`. Only an
      explicit `getAadhaarForAdmin(studentId)` helper (RBAC-checked) decrypts.

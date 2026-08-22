@@ -11,7 +11,9 @@
     "seed": "tsx --env-file=.env src/scripts/seed.ts",
     "benchmark": "tsx --env-file=.env src/scripts/benchmark.ts",
     "db:redis:up": "docker compose up -d redis",
-    "db:redis:down": "docker compose down"
+    "db:redis:down": "docker compose down",
+    "db:types": "supabase gen types typescript --local > src/types/database.ts",
+    "db:seed": "tsx --env-file=.env src/scripts/seed.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

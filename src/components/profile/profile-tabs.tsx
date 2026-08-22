@@ -2,7 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Heavy profile tabs — dynamically imported with skeleton fallback to split bundle.
@@ -76,27 +78,86 @@ function Detail({ label, value }: { label: string; value: string }) {
   );
 }
 
+function initialsOf(s: StudentCore) {
+  return `${s.first_name?.[0] ?? ""}${s.last_name?.[0] ?? ""}`.toUpperCase();
+}
+
 export function ProfileTabs({ student }: { student: StudentCore }) {
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold">
-          {student.first_name} {student.last_name}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {student.pnr} · {student.roll_number ?? "—"}
-          {student.course_id ? ` · Course #${student.course_id}` : ""}
-          {student.current_semester ? ` · Sem ${student.current_semester}` : ""}
-        </p>
-        {(student.latest_sgpa != null || student.backlog_count != null) && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {student.latest_sgpa != null ? `Latest SGPA: ${Number(student.latest_sgpa).toFixed(2)}` : ""}
-            {student.latest_sgpa != null && student.backlog_count != null ? " · " : ""}
-            {student.backlog_count != null ? `Backlogs: ${student.backlog_count}` : ""}
-            {student.latest_result_status ? ` · ${student.latest_result_status}` : ""}
+      {/* CBI-style dossier header — photo left-top, name + file details right */}
+      <Card className="overflow-hidden border-2">
+        <div className="bg-muted/30 px-4 py-2 flex items-center justify-between border-b">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            University Record — Person Dossier &nbsp;·&nbsp; File No: {student.pnr}
           </p>
-        )}
-      </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground hidden sm:inline">Classification</span>
+            <Badge variant={student.status === "active" ? "secondary" : "outline"} className="uppercase text-[10px]">
+              {student.status}
+            </Badge>
+          </div>
+        </div>
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row gap-5">
+            {/* Photo — left top corner rectangle */}
+            <div className="shrink-0">
+              <div className="h-[168px] w-[132px] overflow-hidden rounded-md border-2 bg-muted shadow-sm">
+                {student.photo_path ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={student.photo_path} alt={`${student.first_name} ${student.last_name}`} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted p-3 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full border bg-background text-sm font-semibold tracking-tight">
+                      {initialsOf(student) || "—"}
+                    </div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Photo Not Held</p>
+                    <p className="text-[10px] leading-none text-muted-foreground">3.5 × 4.5 cm</p>
+                  </div>
+                )}
+              </div>
+              <p className="mt-1.5 text-center text-[10px] uppercase tracking-wider text-muted-foreground">ID Photo · {student.pnr}</p>
+            </div>
+
+            {/* Name + dossier fields */}
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-semibold tracking-tight leading-none">
+                {student.first_name} {student.last_name}
+              </h1>
+              <p className="mt-1 font-mono text-xs text-muted-foreground">
+                PNR {student.pnr} &nbsp;·&nbsp; Roll {student.roll_number ?? "—"}
+                {student.abc_id ? ` · ABC ${student.abc_id}` : ""}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <Badge variant="outline" className="font-mono text-[11px]">Course #{student.course_id ?? "—"}</Badge>
+                {student.current_semester ? <Badge variant="outline" className="text-[11px]">Sem {student.current_semester}</Badge> : null}
+                {student.seat_type ? <Badge variant="outline" className="text-[11px] uppercase">{student.seat_type}</Badge> : null}
+                {student.admission_mode ? <Badge variant="outline" className="text-[11px] uppercase">{student.admission_mode}</Badge> : null}
+                {student.intake_stream ? <Badge variant="outline" className="text-[11px] uppercase">{student.intake_stream}</Badge> : null}
+              </div>
+              {(student.latest_sgpa != null || student.backlog_count != null || student.latest_result_status) && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {student.latest_sgpa != null ? <><span className="font-medium text-foreground">SGPA {Number(student.latest_sgpa).toFixed(2)}</span> &nbsp;·&nbsp; </> : null}
+                  {student.backlog_count != null ? <>Backlogs <span className="font-medium text-foreground">{student.backlog_count}</span> &nbsp;·&nbsp; </> : null}
+                  {student.latest_result_status ? <span className="uppercase tracking-wider">{student.latest_result_status}</span> : null}
+                  {student.latest_declared_at ? <span className="ml-1">({new Date(student.latest_declared_at).toLocaleDateString()})</span> : null}
+                </p>
+              )}
+              <Separator className="my-3" />
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                <div><dt className="text-[11px] uppercase tracking-wider text-muted-foreground">Date of Birth</dt><dd className="font-medium">{student.date_of_birth ?? "—"}</dd></div>
+                <div><dt className="text-[11px] uppercase tracking-wider text-muted-foreground">Gender</dt><dd className="font-medium">{student.gender ?? "—"}</dd></div>
+                <div><dt className="text-[11px] uppercase tracking-wider text-muted-foreground">Blood Group</dt><dd className="font-medium">{student.blood_group ?? "—"}</dd></div>
+                <div><dt className="text-[11px] uppercase tracking-wider text-muted-foreground">Category</dt><dd className="font-medium">{student.category_id != null ? `#${student.category_id}` : "—"}</dd></div>
+                <div className="col-span-2"><dt className="text-[11px] uppercase tracking-wider text-muted-foreground">Address</dt><dd className="font-medium leading-snug">{student.address ? `${student.address}${student.city ? `, ${student.city}` : ""}${student.state ? `, ${student.state}` : ""}${student.country ? `, ${student.country}` : ""}` : "—"}</dd></div>
+                <div><dt className="text-[11px] uppercase tracking-wider text-muted-foreground">Email</dt><dd className="font-medium truncate">{student.email ?? "—"}</dd></div>
+                <div><dt className="text-[11px] uppercase tracking-wider text-muted-foreground">Phone</dt><dd className="font-medium">{student.phone ?? "—"}</dd></div>
+                <div className="col-span-2"><dt className="text-[11px] uppercase tracking-wider text-muted-foreground">Guardian</dt><dd className="font-medium">{student.guardian_name ? `${student.guardian_name}${student.guardian_contact_number ? ` · ${student.guardian_contact_number}` : ""}` : "—"}</dd></div>
+              </dl>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       <Tabs defaultValue="personal">
         <TabsList className="flex-wrap">
           <TabsTrigger value="personal">Personal</TabsTrigger>

@@ -13,7 +13,8 @@
     "db:redis:up": "docker compose up -d redis",
     "db:redis:down": "docker compose down",
     "db:types": "supabase gen types typescript --local > src/types/database.ts",
-    "db:seed": "tsx --env-file=.env src/scripts/seed.ts"
+    "db:seed": "tsx --env-file=.env src/scripts/seed.ts",
+    "db:refresh:views": "tsx --env-file=.env src/scripts/refresh-views.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

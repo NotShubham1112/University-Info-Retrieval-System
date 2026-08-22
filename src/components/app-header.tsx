@@ -18,7 +18,7 @@ export function AppHeader() {
 
   return (
     <header className="border-b border-border">
-      <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between px-6">
+      <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/search" className="text-sm font-semibold">
           University Info Retrieval
         </Link>

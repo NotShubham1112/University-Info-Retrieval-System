@@ -95,8 +95,8 @@ export default async function StudentPage({
 }) {
   const { id } = await params;
   return (
-    <main className="mx-auto max-w-5xl p-6">
-      <Suspense fallback={<ProfileSkeleton />}>
+    <main className="w-full px-4 sm:px-6 lg:px-8 py-6">
+      <Suspense fallback={<ProfileSkeleton />}> 
         <StudentProfile id={id} />
       </Suspense>
     </main>

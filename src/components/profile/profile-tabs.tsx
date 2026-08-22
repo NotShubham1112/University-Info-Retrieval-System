@@ -85,9 +85,9 @@ function initialsOf(s: StudentCore) {
 export function ProfileTabs({ student }: { student: StudentCore }) {
   return (
     <div className="flex flex-col gap-6">
-      {/* CBI-style dossier header — photo left-top, name + file details right */}
-      <Card className="overflow-hidden border-2">
-        <div className="bg-muted/30 px-4 py-2 flex items-center justify-between border-b">
+      {/* Dossier header — clean minimal, photo left-top */}
+      <Card className="overflow-hidden">
+        <div className="bg-muted/40 px-4 py-2.5 flex items-center justify-between border-b">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             University Record — Person Dossier &nbsp;·&nbsp; File No: {student.pnr}
           </p>
@@ -102,7 +102,7 @@ export function ProfileTabs({ student }: { student: StudentCore }) {
           <div className="flex flex-col sm:flex-row gap-5">
             {/* Photo — left top corner rectangle */}
             <div className="shrink-0">
-              <div className="h-[168px] w-[132px] overflow-hidden rounded-md border-2 bg-muted shadow-sm">
+              <div className="h-[168px] w-[132px] overflow-hidden rounded-lg border bg-muted">
                 {student.photo_path ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={student.photo_path} alt={`${student.first_name} ${student.last_name}`} className="h-full w-full object-cover" />

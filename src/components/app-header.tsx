@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,17 +25,8 @@ import {
 } from "@/components/ui/command";
 import { Search, Bell, LogOut, User, FileText, GraduationCap } from "lucide-react";
 
-const NAV_ITEMS = [
-  { label: "Students", href: "/search" },
-  { label: "Academics", href: "/search" },
-  { label: "Attendance", href: "/search" },
-  { label: "Fees", href: "/search" },
-  { label: "Documents", href: "/search" },
-] as const;
-
 export function AppHeader() {
   const router = useRouter();
-  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
 
@@ -74,29 +65,9 @@ export function AppHeader() {
     <>
       <header className="sticky top-0 z-40 h-14 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          {/* Left: logo */}
-          <div className="flex items-center gap-8">
-            <Link href="/search" className="text-sm font-semibold tracking-tight">
-              University Info
-            </Link>
-            {/* Center/left nav — hidden on mobile */}
-            <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
-              {NAV_ITEMS.map((item) => {
-                const active = pathname?.startsWith(item.href) && item.label === "Students";
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className={`rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors duration-150 hover:bg-muted hover:text-foreground ${
-                      active ? "text-foreground" : "text-muted-foreground"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
+          <Link href="/search" className="text-sm font-semibold tracking-tight">
+            University Info
+          </Link>
 
           {/* Right */}
           <div className="flex items-center gap-1">

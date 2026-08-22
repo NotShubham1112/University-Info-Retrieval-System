@@ -14,7 +14,9 @@
     "db:redis:down": "docker compose down",
     "db:types": "supabase gen types typescript --local > src/types/database.ts",
     "db:seed": "tsx --env-file=.env src/scripts/seed.ts",
-    "db:refresh:views": "tsx --env-file=.env src/scripts/refresh-views.ts"
+    "db:refresh:views": "tsx --env-file=.env src/scripts/refresh-views.ts",
+    "db:smoke": "tsx --env-file=.env src/scripts/smoke.ts",
+    "benchmark:load": "tsx --env-file=.env src/scripts/load-test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

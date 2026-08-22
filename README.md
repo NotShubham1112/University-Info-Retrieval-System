@@ -67,15 +67,30 @@ npx supabase start
 
 # 2. Configure environment variables
 cp .env.example .env
+# Fill NEXT_PUBLIC_SUPABASE_URL / ANON_KEY / SERVICE_ROLE_KEY from `npx supabase status`
+# and set AADHAAR_ENCRYPTION_KEY via:  openssl rand -base64 32
 
 # 3. Install dependencies
 npm install
 
-# 4. Start the app
+# 4. Start Redis (Docker) — layered cache (LRU hot path → Redis). App works without it (LRU-only degraded mode)
+npm run db:redis:up   # or: docker compose up -d redis
+# Verify: docker compose ps  (erp-redis should be healthy)
+
+# 5. Reset DB, seed, and refresh materialized views
+npx supabase db reset
+npm run db:seed            # 40 years × 2000/year (~80k students; a few minutes, batch 500)
+npm run db:refresh:views   # refresh_report_views() for mv_* (concurrently, with no data on reset)
+
+# 6. Verify
+npm run db:smoke           # RPC/view smoke: courses, student_summary, dashboard_stats, search_students
+
+# 7. Start the app
 npm run dev
 ```
 
 Open http://localhost:3000, sign in at `/login`, and you'll land on `/search`.
+Dual dashboards: `/dashboard/viewer` (read-only) and `/dashboard/admin` (full ERP, RBAC-gated).
 
 ## Seeding the dataset
 
@@ -140,8 +155,8 @@ npx supabase db query "insert into user_roles(user_id, role_id) select id, (sele
 
 ## Benchmark
 
-Measured over the full synthetic dataset (80,000 students, 3.2M enrollments)
-with `npm run benchmark` (20 iterations per probe):
+Single-request probes over the full synthetic dataset (80,000 students)
+with `npm run benchmark` (20 iterations per probe, direct Supabase RPC):
 
 | type | query | avg (ms) | min (ms) | max (ms) |
 | --- | --- | --- | --- | --- |
@@ -150,11 +165,55 @@ with `npm run benchmark` (20 iterations per probe):
 | name | Rahul Sharma | 50.77 | 48.85 | 55.34 |
 | name | Rahul | 14.17 | 13.12 | 15.22 |
 
-Run it yourself:
-
 ```bash
-npm run benchmark
+npm run benchmark            # single-request DB probes
+npm run benchmark:load       # concurrency gate — requires `npm run dev` running
+npm run benchmark:load -- --concurrency=10 --requests=100 --base=http://127.0.0.1:3000
 ```
+
+### Concurrency gate (Task 10)
+
+`npm run benchmark:load` hits the live HTTP API at 50 concurrent × 2K requests
+with a mixed read profile (search 30% · profile 40% · dashboard stats 20% · list 10%)
+and reports p50/p95/p99, throughput, error rate, and per-endpoint breakdown.
+Also probes cache-hot (same search query twice, second hit < 5ms) and dashboard page load (< 2s).
+Exits non-zero on gate failure; handles no-server gracefully (clear message, no crash).
+
+Targets (spec §11, Gate C):
+
+| Metric | Target | Notes |
+| --- | --- | --- |
+| p50 | < 100ms | overall |
+| p95 | < 250ms | overall |
+| errors | 0 | no error spikes |
+| Redis hot query | < 5ms | second hit on same `search:` key (LRU hot path sub-ms → Redis) |
+| Dashboard load | < 2s | GET /dashboard/admin (or /) under load |
+
+Example run (local, Redis + seeded DB, dev server on 3000):
+
+```
+────────────────────────────────────────────────────────
+  ERP v4 load test — Task 10 concurrency gate
+────────────────────────────────────────────────────────
+  base:           http://127.0.0.1:3000
+  concurrency:    50 workers
+  requests:       2000
+  Completed 2000 requests in …  (… req/s)
+  Overall latency (ms):
+    p50    …   ✓ < 100ms
+    p95    …   ✓ < 250ms
+    errors 0 (0.00%)   ✓ 0 errors
+  Per-endpoint breakdown:
+    search / profile / stats / list  avg/p50/p95/p99/max + errors
+  Cache-hot probe: second … ✓ < 5ms
+  Dashboard load: … ✓ < 2s
+  Gate: PASS ✓
+────────────────────────────────────────────────────────
+```
+
+If the server is not running, the script prints:
+`✗ Server not reachable. Could not connect to http://127.0.0.1:3000 — start the app first: npm run dev`
+and exits 1 (gate FAIL, no crash).
 
 ## Project structure
 

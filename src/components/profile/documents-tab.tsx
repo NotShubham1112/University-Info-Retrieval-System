@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useSectionData } from "@/components/profile/use-section-data";
+import { useStudentDocuments, useInvalidateProfileSection } from "@/hooks/use-profile-sections";
 
 const DOCUMENT_TYPES = [
   "Transcript",
@@ -31,14 +31,9 @@ const DOCUMENT_TYPES = [
   "Other",
 ];
 
-interface DocumentRow {
-  id: number;
-  document_type: string | null;
-  file_name: string | null;
-  file_size: number | null;
-  mime_type: string | null;
-  uploaded_at: string | null;
-  version: number | null;
+interface UploadFormProps {
+  studentId: number;
+  onUploaded: () => void;
 }
 
 function formatBytes(bytes: number | null): string {
@@ -61,11 +56,6 @@ async function openDocument(id: number) {
   if (!res.ok) return;
   const json = (await res.json()) as { url?: string };
   if (json.url) window.open(json.url, "_blank", "noopener,noreferrer");
-}
-
-interface UploadFormProps {
-  studentId: number;
-  onUploaded: () => void;
 }
 
 function UploadForm({ studentId, onUploaded }: UploadFormProps) {
@@ -160,21 +150,19 @@ function UploadForm({ studentId, onUploaded }: UploadFormProps) {
 }
 
 export function DocumentsTab({ studentId }: { studentId: number }) {
-  const [refreshKey, setRefreshKey] = useState(0);
-  const { data, error } = useSectionData<DocumentRow>(
-    `/api/students/${studentId}/documents?refresh=${refreshKey}`,
-  );
+  const { data, error, isLoading } = useStudentDocuments(studentId);
+  const { invalidateDocuments } = useInvalidateProfileSection();
 
   return (
     <div className="flex flex-col gap-4">
       <UploadForm
         studentId={studentId}
-        onUploaded={() => setRefreshKey((key) => key + 1)}
+        onUploaded={() => invalidateDocuments(studentId)}
       />
       {error ? (
-        <p className="text-sm text-muted-foreground">{error}</p>
-      ) : data === null ? (
-        <div className="flex flex-col gap-2">
+        <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
+      ) : isLoading || data === undefined ? (
+        <div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading documents">
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-full" />

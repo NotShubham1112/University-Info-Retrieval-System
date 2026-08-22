@@ -11,25 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useSectionData } from "@/components/profile/use-section-data";
-
-interface SubjectRef {
-  name: string | null;
-  semester_no: number | null;
-}
-
-interface EnrollmentRef {
-  subjects: SubjectRef | null;
-}
-
-interface AcademicRow {
-  id: number;
-  marks: number | null;
-  grade: string | null;
-  grade_point: number | null;
-  result_status: string | null;
-  enrollments: EnrollmentRef | null;
-}
+import { useAcademicResults } from "@/hooks/use-profile-sections";
 
 function resultLabel(status: string | null): string {
   switch (status) {
@@ -45,16 +27,14 @@ function resultLabel(status: string | null): string {
 }
 
 export function AcademicTab({ studentId }: { studentId: number }) {
-  const { data, error } = useSectionData<AcademicRow>(
-    `/api/students/${studentId}/results`,
-  );
+  const { data, error, isLoading } = useAcademicResults(studentId);
 
   if (error) {
-    return <p className="text-sm text-muted-foreground">{error}</p>;
+    return <p className="text-sm text-muted-foreground">{(error as Error).message ?? "Couldn't load this section. Try again."}</p>;
   }
-  if (data === null) {
+  if (isLoading || data === undefined) {
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading academic results">
         <Skeleton className="h-8 w-full" />
         <Skeleton className="h-8 w-full" />
         <Skeleton className="h-8 w-full" />
@@ -80,9 +60,7 @@ export function AcademicTab({ studentId }: { studentId: number }) {
           <TableBody>
             {data.map((row) => (
               <TableRow key={row.id}>
-                <TableCell>
-                  {row.enrollments?.subjects?.semester_no ?? "—"}
-                </TableCell>
+                <TableCell>{row.enrollments?.subjects?.semester_no ?? "—"}</TableCell>
                 <TableCell>{row.enrollments?.subjects?.name ?? "—"}</TableCell>
                 <TableCell>{row.marks ?? "—"}</TableCell>
                 <TableCell>
@@ -90,13 +68,7 @@ export function AcademicTab({ studentId }: { studentId: number }) {
                   {row.grade_point != null ? ` (${row.grade_point})` : ""}
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    variant={
-                      row.result_status === "fail" ? "outline" : "secondary"
-                    }
-                  >
-                    {resultLabel(row.result_status)}
-                  </Badge>
+                  <Badge variant={row.result_status === "fail" ? "outline" : "secondary"}>{resultLabel(row.result_status)}</Badge>
                 </TableCell>
               </TableRow>
             ))}

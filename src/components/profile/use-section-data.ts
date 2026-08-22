@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * @deprecated Task 9 — replaced by TanStack Query hooks in `src/hooks/use-profile-sections.ts`.
+ * Kept for backwards-compat only; new code should use `useAcademicResults` etc.
+ * This file will be removed in a future task.
+ */
 import { useEffect, useState } from "react";
 
 interface SectionState<T> {

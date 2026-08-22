@@ -16,6 +16,7 @@ const withBundleAnalyzer =
 
 const nextConfig: NextConfig = {
   compress: true,
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   // Tree-shake heavy icon / lib imports — lucide + shadcn patterns benefit measurably.
   experimental: {
     optimizePackageImports: ["lucide-react", "date-fns"],

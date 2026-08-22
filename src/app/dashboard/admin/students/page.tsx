@@ -2,16 +2,23 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StudentsTable } from "@/components/dashboard/students/students-table";
 import { StudentDialog } from "@/components/dashboard/students/student-dialog";
 import { DeleteConfirm } from "@/components/dashboard/students/delete-confirm";
 import { DocumentUpload } from "@/components/dashboard/students/document-upload";
-import { CsvImportDialog } from "@/components/dashboard/students/csv-import";
 import { useStudents } from "@/hooks/use-students";
 import type { StudentRow } from "@/lib/api/students";
 import { Plus, Upload } from "lucide-react";
+
+// Heavy CSV import dialog — dynamic split keeps initial JS smaller
+const CsvImportDialog = dynamic(
+  () => import("@/components/dashboard/students/csv-import").then((m) => m.CsvImportDialog),
+  { loading: () => <Skeleton className="h-32 w-full" />, ssr: false }
+);
 
 export default function StudentsAdminPage() {
   const [search, setSearch] = React.useState("");
@@ -151,7 +158,7 @@ export default function StudentsAdminPage() {
       <StudentDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} />
       <DeleteConfirm open={!!deleteRow} onOpenChange={(v) => !v && setDeleteRow(null)} row={deleteRow} />
       <DocumentUpload open={!!docStudent} onOpenChange={(v) => !v && setDocStudent(null)} student={docStudent} />
-      <CsvImportDialog open={importOpen} onOpenChange={setImportOpen} />
+      {importOpen ? <CsvImportDialog open={importOpen} onOpenChange={setImportOpen} /> : null}
     </div>
   );
 }

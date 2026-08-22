@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useSectionData } from "@/components/profile/use-section-data";
+import { useStudentFees } from "@/hooks/use-profile-sections";
 
 const inr = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -20,25 +20,6 @@ const inr = new Intl.NumberFormat("en-IN", {
 
 function formatINR(value: number): string {
   return inr.format(value);
-}
-
-interface PaymentRef {
-  id: number;
-  amount: number;
-  payment_date: string | null;
-}
-
-interface FeeStructureRef {
-  fee_type: string | null;
-  amount: number | null;
-}
-
-interface FeeRow {
-  id: number;
-  status: string | null;
-  amount_due: number | null;
-  fee_structures: FeeStructureRef | null;
-  payments: PaymentRef[] | null;
 }
 
 function statusLabel(status: string | null): string {
@@ -55,16 +36,14 @@ function statusLabel(status: string | null): string {
 }
 
 export function FeesTab({ studentId }: { studentId: number }) {
-  const { data, error } = useSectionData<FeeRow>(
-    `/api/students/${studentId}/fees`,
-  );
+  const { data, error, isLoading } = useStudentFees(studentId);
 
   if (error) {
-    return <p className="text-sm text-muted-foreground">{error}</p>;
+    return <p className="text-sm text-muted-foreground">{(error as Error).message ?? "Couldn't load this section. Try again."}</p>;
   }
-  if (data === null) {
+  if (isLoading || data === undefined) {
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading fees">
         <Skeleton className="h-8 w-full" />
         <Skeleton className="h-8 w-full" />
         <Skeleton className="h-8 w-full" />
@@ -93,28 +72,12 @@ export function FeesTab({ studentId }: { studentId: number }) {
               return (
                 <TableRow key={row.id}>
                   <TableCell>{row.fee_structures?.fee_type ?? "—"}</TableCell>
+                  <TableCell>{row.fee_structures?.amount != null ? formatINR(row.fee_structures.amount) : "—"}</TableCell>
+                  <TableCell>{row.amount_due != null ? formatINR(row.amount_due) : "—"}</TableCell>
                   <TableCell>
-                    {row.fee_structures?.amount != null
-                      ? formatINR(row.fee_structures.amount)
-                      : "—"}
+                    <Badge variant={row.status === "unpaid" ? "outline" : "secondary"}>{statusLabel(row.status)}</Badge>
                   </TableCell>
-                  <TableCell>
-                    {row.amount_due != null ? formatINR(row.amount_due) : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        row.status === "unpaid" ? "outline" : "secondary"
-                      }
-                    >
-                      {statusLabel(row.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {payment
-                      ? `${formatINR(payment.amount)} · ${payment.payment_date ?? "—"}`
-                      : "—"}
-                  </TableCell>
+                  <TableCell>{payment ? `${formatINR(payment.amount)} · ${payment.payment_date ?? "—"}` : "—"}</TableCell>
                 </TableRow>
               );
             })}

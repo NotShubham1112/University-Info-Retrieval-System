@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -31,13 +32,21 @@ function getQueryClient() {
   return browserQueryClient;
 }
 
+// Devtools loaded lazily and only rendered in development — keeps prod bundle clean.
+const ReactQueryDevtools = dynamic(
+  () => import("@tanstack/react-query-devtools").then((m) => m.ReactQueryDevtools),
+  { ssr: false }
+);
+
 export function Providers({ children }: React.PropsWithChildren) {
   const queryClient = getQueryClient();
+  const isDev = process.env.NODE_ENV === "development";
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
         <Toaster>{children}</Toaster>
       </ThemeProvider>
+      {isDev ? <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" /> : null}
     </QueryClientProvider>
   );
 }

@@ -1,16 +1,24 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ExamsTable } from "@/components/dashboard/exams/exams-table";
 import { ExamDialog } from "@/components/dashboard/exams/exam-dialog";
-import { MarksDialog } from "@/components/dashboard/exams/marks-dialog";
 import { DeleteConfirm } from "@/components/dashboard/exams/delete-confirm";
 import { useExams, usePublishExam } from "@/hooks/use-exams";
 import type { ExamRow } from "@/lib/api/exams";
 import { Plus } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+
+// Marks entry grid — heavy JSON editor, split out
+const MarksDialog = dynamic(
+  () => import("@/components/dashboard/exams/marks-dialog").then((m) => m.MarksDialog),
+  { loading: () => <Skeleton className="h-64 w-full" />, ssr: false }
+);
 
 export default function ExamsAdminPage() {
   const [search, setSearch] = React.useState("");
@@ -91,7 +99,7 @@ export default function ExamsAdminPage() {
 
       <ExamDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} />
       <DeleteConfirm open={!!deleteRow} onOpenChange={(v) => !v && setDeleteRow(null)} row={deleteRow} />
-      <MarksDialog open={!!marksExam} onOpenChange={(v) => !v && setMarksExam(null)} exam={marksExam} />
+      {marksExam ? <MarksDialog open={!!marksExam} onOpenChange={(v) => !v && setMarksExam(null)} exam={marksExam} /> : null}
     </div>
   );
 }

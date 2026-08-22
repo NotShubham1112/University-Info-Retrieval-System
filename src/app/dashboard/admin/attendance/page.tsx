@@ -1,16 +1,29 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AttendanceMarking } from "@/components/dashboard/attendance/attendance-marking";
-import { AttendanceReport } from "@/components/dashboard/attendance/attendance-report";
-import { CsvImportDialog } from "@/components/dashboard/attendance/csv-import";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAttendance } from "@/hooks/use-attendance";
 import { useStudents } from "@/hooks/use-students";
 import { Upload } from "lucide-react";
+
+// Heavy attendance components — dynamically imported
+const AttendanceMarking = dynamic(
+  () => import("@/components/dashboard/attendance/attendance-marking").then((m) => m.AttendanceMarking),
+  { loading: () => <Skeleton className="h-64 w-full" />, ssr: false }
+);
+const AttendanceReport = dynamic(
+  () => import("@/components/dashboard/attendance/attendance-report").then((m) => m.AttendanceReport),
+  { loading: () => <Skeleton className="h-48 w-full" /> }
+);
+const CsvImportDialog = dynamic(
+  () => import("@/components/dashboard/attendance/csv-import").then((m) => m.CsvImportDialog),
+  { loading: () => <Skeleton className="h-32 w-full" />, ssr: false }
+);
 
 export default function AttendanceAdminPage() {
   const [courseId, setCourseId] = React.useState("1");
@@ -50,15 +63,17 @@ export default function AttendanceAdminPage() {
         <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="size-4" /> Import CSV</Button>
       </div>
 
-      <AttendanceMarking
-        courseId={courseId}
-        subjectId={subjectId}
-        date={date}
-        roster={roster}
-        onCourseIdChange={setCourseId}
-        onSubjectIdChange={setSubjectId}
-        onDateChange={setDate}
-      />
+      <React.Suspense fallback={<Skeleton className="h-64 w-full" />}>
+        <AttendanceMarking
+          courseId={courseId}
+          subjectId={subjectId}
+          date={date}
+          roster={roster}
+          onCourseIdChange={setCourseId}
+          onSubjectIdChange={setSubjectId}
+          onDateChange={setDate}
+        />
+      </React.Suspense>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -86,8 +101,10 @@ export default function AttendanceAdminPage() {
         </CardContent>
       </Card>
 
-      <AttendanceReport courseId={courseId} subjectId={subjectId} />
-      <CsvImportDialog open={importOpen} onOpenChange={setImportOpen} />
+      <React.Suspense fallback={<Skeleton className="h-48 w-full" />}>
+        <AttendanceReport courseId={courseId} subjectId={subjectId} />
+      </React.Suspense>
+      {importOpen ? <CsvImportDialog open={importOpen} onOpenChange={setImportOpen} /> : null}
     </div>
   );
 }

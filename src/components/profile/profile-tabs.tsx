@@ -140,7 +140,7 @@ export function ProfileTabs({ student }: { student: StudentCore }) {
                   {student.latest_sgpa != null ? <><span className="font-medium text-foreground">SGPA {Number(student.latest_sgpa).toFixed(2)}</span> &nbsp;·&nbsp; </> : null}
                   {student.backlog_count != null ? <>Backlogs <span className="font-medium text-foreground">{student.backlog_count}</span> &nbsp;·&nbsp; </> : null}
                   {student.latest_result_status ? <span className="uppercase tracking-wider">{student.latest_result_status}</span> : null}
-                  {student.latest_declared_at ? <span className="ml-1">({new Date(student.latest_declared_at).toLocaleDateString()})</span> : null}
+                  {student.latest_declared_at ? <span className="ml-1" suppressHydrationWarning>({new Date(student.latest_declared_at).toLocaleDateString("en-GB")})</span> : null}
                 </p>
               )}
               <Separator className="my-3" />

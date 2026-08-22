@@ -53,3 +53,4 @@ supabase/.branches/
 
 # superpowers SDD workspaces (per-plan scratch, git-ignored by design)
 .superpowers/
+session-*.md

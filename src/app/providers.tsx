@@ -42,11 +42,11 @@ export function Providers({ children }: React.PropsWithChildren) {
   const queryClient = getQueryClient();
   const isDev = process.env.NODE_ENV === "development";
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+      <QueryClientProvider client={queryClient}>
         <Toaster>{children}</Toaster>
-      </ThemeProvider>
-      {isDev ? <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" /> : null}
-    </QueryClientProvider>
+        {isDev ? <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" /> : null}
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

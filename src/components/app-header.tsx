@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
@@ -121,21 +122,23 @@ export function AppHeader() {
       </header>
 
       <CommandDialog open={open} onOpenChange={setOpen} title="Search" description="Search students and records">
-        <CommandInput placeholder="Search students, PNR, courses…" />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Quick actions">
-            <CommandItem onSelect={() => { setOpen(false); router.push("/search"); }}>
-              <GraduationCap className="h-4 w-4" /> Go to Students
-            </CommandItem>
-            <CommandItem onSelect={() => { setOpen(false); router.push("/search"); }}>
-              <FileText className="h-4 w-4" /> View Documents
-            </CommandItem>
-            <CommandItem onSelect={() => { setOpen(false); router.push("/search"); }}>
-              <Search className="h-4 w-4" /> Advanced search
-            </CommandItem>
-          </CommandGroup>
-        </CommandList>
+        <Command>
+          <CommandInput placeholder="Search students, PNR, courses…" />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup heading="Quick actions">
+              <CommandItem onSelect={() => { setOpen(false); router.push("/search"); }}>
+                <GraduationCap className="h-4 w-4" /> Go to Students
+              </CommandItem>
+              <CommandItem onSelect={() => { setOpen(false); router.push("/search"); }}>
+                <FileText className="h-4 w-4" /> View Documents
+              </CommandItem>
+              <CommandItem onSelect={() => { setOpen(false); router.push("/search"); }}>
+                <Search className="h-4 w-4" /> Advanced search
+              </CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
       </CommandDialog>
     </>
   );

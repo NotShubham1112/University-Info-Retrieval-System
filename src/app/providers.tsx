@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
-import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 
 function makeQueryClient() {
@@ -42,11 +42,11 @@ export function Providers({ children }: React.PropsWithChildren) {
   const queryClient = getQueryClient();
   const isDev = process.env.NODE_ENV === "development";
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <QueryClientProvider client={queryClient}>
         <Toaster>{children}</Toaster>
-      </ThemeProvider>
-      {isDev ? <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" /> : null}
-    </QueryClientProvider>
+        {isDev ? <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" /> : null}
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

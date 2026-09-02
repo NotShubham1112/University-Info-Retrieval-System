@@ -3,6 +3,15 @@ import { createServerClient } from "@/lib/supabase/server";
 import { ProfileTabs } from "@/components/profile/profile-tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { notFound } from "next/navigation";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { PageHeaderActions } from "@/components/profile/page-header-actions";
 
 function ProfileSkeleton() {
   return (
@@ -22,18 +31,12 @@ function ProfileSkeleton() {
 async function StudentProfile({ id }: { id: string }) {
   const supabase = await createServerClient();
 
-  // Prefer student_summary view (v4) — single row with admissions + academic_progress + latest semester
-  const { data, error } = await supabase
-    .from("student_summary")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const { data, error } = await supabase.from("student_summary").select("*").eq("id", id).maybeSingle();
 
   if (!error && data) {
     return <ProfileTabs student={data as unknown as Parameters<typeof ProfileTabs>[0]["student"]} />;
   }
 
-  // Fallback to direct students row (v3 core) when view not yet deployed or row missing summary join
   const { data: fallback, error: fallbackErr } = await supabase
     .from("students")
     .select(
@@ -44,13 +47,22 @@ async function StudentProfile({ id }: { id: string }) {
 
   if (fallbackErr || !fallback) notFound();
 
-  // Enrich fallback with admissions + academic_progress if available (best-effort)
   let enriched: Record<string, unknown> = { ...fallback };
   try {
     const [{ data: adm }, { data: ap }, { data: sr }] = await Promise.all([
-      supabase.from("admissions").select("id,course_id,academic_year_id,admission_mode,seat_type,intake_stream,expected_grad_year,roll_number").eq("student_id", id).maybeSingle(),
+      supabase
+        .from("admissions")
+        .select("id,course_id,academic_year_id,admission_mode,seat_type,intake_stream,expected_grad_year,roll_number")
+        .eq("student_id", id)
+        .maybeSingle(),
       supabase.from("academic_progress").select("current_semester,backlog_count").eq("student_id", id).maybeSingle(),
-      supabase.from("semester_records").select("semester_no,sgpa,result_status,declared_at").eq("student_id", id).order("semester_no", { ascending: false }).limit(1).maybeSingle(),
+      supabase
+        .from("semester_records")
+        .select("semester_no,sgpa,result_status,declared_at")
+        .eq("student_id", id)
+        .order("semester_no", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
     if (adm) {
       enriched = {
@@ -82,20 +94,40 @@ async function StudentProfile({ id }: { id: string }) {
       };
     }
   } catch {
-    // best-effort only
+    // best-effort
   }
 
   return <ProfileTabs student={enriched as unknown as Parameters<typeof ProfileTabs>[0]["student"]} />;
 }
 
-export default async function StudentPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function StudentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return (
-    <main className="mx-auto max-w-3xl p-6">
+    <main className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 py-6">
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/search">Home</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/search">Students</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Student Profile</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Student Profile</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Complete academic and administrative record</p>
+        </div>
+        <PageHeaderActions />
+      </div>
+
       <Suspense fallback={<ProfileSkeleton />}>
         <StudentProfile id={id} />
       </Suspense>

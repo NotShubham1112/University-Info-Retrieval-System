@@ -9,6 +9,7 @@ export interface StudentSummary {
   last_name: string;
   program_id: number;
   admission_date: string;
+  photo_path?: string | null;
 }
 
 export async function runSearch(
@@ -18,7 +19,7 @@ export async function runSearch(
   const p = buildSearchParams(args.q);
   let query = supabase
     .from("students")
-    .select("id,pnr,roll_number,first_name,last_name,program_id,admission_date")
+    .select("id,pnr,roll_number,first_name,last_name,program_id,admission_date,photo_path")
     .order("id", { ascending: true })
     .limit(SEARCH_LIMIT);
 

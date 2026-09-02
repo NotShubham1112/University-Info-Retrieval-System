@@ -21,8 +21,25 @@ function isAuthRoute(pathname: string): boolean {
   return pathname.startsWith("/api/auth") || pathname.startsWith("/auth");
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Guard: Supabase chunked auth cookies can accumulate (sb-*-auth-token.0/.1/...)
+  // and push Cookie header past Node's 8-16KB limit -> "header field exceeds
+  // server limit" before middleware even runs on the NEXT request. Proactively
+  // clear if we're already near the limit so the redirect can reset the browser.
+  const cookieHeader = request.headers.get("cookie") ?? "";
+  if (cookieHeader.length > 7000 && !pathname.startsWith("/login")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    const res = NextResponse.redirect(url);
+    for (const c of request.cookies.getAll()) {
+      if (c.name.startsWith("sb-") && c.name.includes("-auth-token")) {
+        res.cookies.set(c.name, "", { maxAge: 0, path: "/" });
+      }
+    }
+    return res;
+  }
 
   // Rate limit only API routes — skip static/assets and non-API pages
   if (pathname.startsWith("/api/")) {
@@ -76,7 +93,25 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
+      // Preserve Set-Cookie headers from Supabase (clears invalid refresh token)
+      // instead of discarding them with a fresh redirect. Without this, the
+      // corrupted Cookie header stays on the browser and triggers
+      // "Size of a request header field exceeds server limit".
+      const redirectResponse = NextResponse.redirect(url);
+      for (const cookie of supabaseResponse.cookies.getAll()) {
+        redirectResponse.cookies.set(cookie);
+      }
+      const hasClearingCookie = supabaseResponse.cookies
+        .getAll()
+        .some((c) => c.value === "");
+      if (!hasClearingCookie) {
+        for (const c of request.cookies.getAll()) {
+          if (c.name.startsWith("sb-") && c.name.includes("-auth-token")) {
+            redirectResponse.cookies.set(c.name, "", { maxAge: 0, path: "/" });
+          }
+        }
+      }
+      return redirectResponse;
     }
 
     if (pathname.startsWith("/dashboard/admin")) {
@@ -96,6 +131,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/search/:path*",
     "/students/:path*",
     "/admin/:path*",
